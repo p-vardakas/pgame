@@ -1,6 +1,7 @@
 import pygame
 import math
 import Constants
+from DamageText import DamageText
 
 
 class Arrow(pygame.sprite.Sprite):
@@ -33,3 +34,18 @@ class Arrow(pygame.sprite.Sprite):
         surface.blit(self.image, (
             (self.rect.centerx - int(self.image.get_width() / 2)),
             self.rect.centery - int(self.image.get_height() / 2)))
+
+    def damage_enemy(self, enemies):
+        damage = 0
+        damage_text = None
+        for enemy in enemies:
+            if enemy.rect.colliderect(self.rect) and enemy.isAlive:
+                damage = Constants.DAMAGE
+                enemy.health -= damage
+                self.kill()
+                break
+
+        if damage:
+            damage_text = DamageText(enemy.rect.centerx, enemy.rect.y, str(enemy.health), Constants.RED)
+
+        return damage_text

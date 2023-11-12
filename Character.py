@@ -15,6 +15,8 @@ class Character:
         self.running = False
         self.action = 0
         self.frame_index = 0
+        self.health = 100
+        self.isAlive = True
 
     def move(self, dx, dy):
         self.running = False
@@ -39,6 +41,10 @@ class Character:
             self.update_action(1)  # 1:run
         else:
             self.update_action(0)  # 0:idle
+
+        if self.health <= 0:
+            self.health = 0
+            self.isAlive = False
 
         animation_speed = 150
 

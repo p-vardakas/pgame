@@ -3,6 +3,7 @@ import Constants
 from Character import Character
 from Image import Image
 from Weapon import Weapon
+from HeartInfo import HeartInfo
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -20,10 +21,15 @@ moving_up = False
 moving_down = False
 
 animation_images = Image.get_animation_list(Image())
-
+heart_images = Image.get_hearts(Image())
 weapon_images = Image.get_weapons(Image())
 weapon = Weapon(weapon_images[0], weapon_images[1])
 arrow_group = pygame.sprite.Group()
+damage_text_group = pygame.sprite.Group()
+
+enemies = []
+enemy = Character(200, 200, animation_images, 4)
+enemies.append(enemy)
 
 player = Character(100, 100, animation_images, 3)
 
@@ -54,16 +60,31 @@ while run:
 
     player.update_animation()
 
+    for enemy in enemies:
+        enemy.update_animation()
+
     arrow = weapon.create_arrow(player)
     if arrow:
         arrow_group.add(arrow)
     for arrow in arrow_group:
         arrow.update()
 
+        damage_text = arrow.damage_enemy(enemies)
+        if damage_text is not None:
+            damage_text_group.add(damage_text)
+
+    damage_text_group.update()
+
     player.draw(screen)
     weapon.draw(screen)
     for arrow in arrow_group:
         arrow.draw(screen)
+
+    damage_text_group.draw(screen)
+    HeartInfo.draw_heart_info(HeartInfo(), enemy, screen, heart_images)
+
+    for enemy in enemies:
+        enemy.draw(screen)
 
     # draw player on screen
     player.draw(screen)

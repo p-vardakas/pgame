@@ -5,118 +5,98 @@ from Image import Image
 from Weapon import Weapon
 from HeartInfo import HeartInfo
 
-pygame.init()
-clock = pygame.time.Clock()
 
-# setup window dimensions
-screen = pygame.display.set_mode((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
+class Game:
+    def __init__(self):
+        self.run = None
+        pygame.init()
 
-# setup window caption
-pygame.display.set_caption("Dungeon Crawler")
+        self.clock = pygame.time.Clock()
+        self.screen = pygame.display.set_mode((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
+        pygame.display.set_caption("Dungeon Crawler")
 
-# player movement variables
-moving_left = False
-moving_right = False
-moving_up = False
-moving_down = False
+        self.player = Character(100, 100, Image.get_animations(Image()), 3)
+        self.enemies = [Character(200, 200, Image.get_animations(Image()), 1)]
+        self.weapon = Weapon(*Image.get_weapons(Image()))
 
-animation_images = Image.get_animation_list(Image())
-heart_images = Image.get_hearts(Image())
-weapon_images = Image.get_weapons(Image())
-weapon = Weapon(weapon_images[0], weapon_images[1])
-arrow_group = pygame.sprite.Group()
-damage_text_group = pygame.sprite.Group()
+        self.arrow_group = pygame.sprite.Group()
+        self.damage_text_group = pygame.sprite.Group()
 
-enemies = []
-enemy = Character(200, 200, animation_images, 4)
-enemies.append(enemy)
+        self.moving_left = False
+        self.moving_right = False
+        self.moving_up = False
+        self.moving_down = False
 
-player = Character(100, 100, animation_images, 3)
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.run = False
+            elif event.type == pygame.KEYDOWN:
+                self.handle_key(event.key, True)
+            elif event.type == pygame.KEYUP:
+                self.handle_key(event.key, False)
 
-run = True
+    def handle_key(self, key, key_pressed):
+        if key == pygame.K_a:
+            self.moving_left = key_pressed
+        elif key == pygame.K_s:
+            self.moving_right = key_pressed
+        elif key == pygame.K_w:
+            self.moving_up = key_pressed
+        elif key == pygame.K_z:
+            self.moving_down = key_pressed
 
-# main game loop
-while run:
-    # set game play speed
-    clock.tick(Constants.FPS)
+    def update(self):
+        dx = Constants.SPEED * (self.moving_right - self.moving_left)
+        dy = Constants.SPEED * (self.moving_down - self.moving_up)
 
-    # Fill background color
-    screen.fill(Constants.BLACK)
+        self.player.move(dx, dy)
+        self.player.update_animation()
 
-    # calculate player movement
-    dx = 0
-    dy = 0
-    if moving_right:
-        dx = Constants.SPEED
-    if moving_left:
-        dx = -Constants.SPEED
-    if moving_up:
-        dy = -Constants.SPEED
-    if moving_down:
-        dy = Constants.SPEED
+        for enemy in self.enemies:
+            enemy.update_animation()
 
-    # move player
-    player.move(dx, dy)
+        arrow = self.weapon.create_arrow(self.player)
 
-    player.update_animation()
+        if arrow:
+            self.arrow_group.add(arrow)
 
-    for enemy in enemies:
-        enemy.update_animation()
+        for arrow in self.arrow_group:
+            arrow.update()
+            damage_text = arrow.damage_enemy(self.enemies)
+            if damage_text:
+                self.damage_text_group.add(damage_text)
 
-    arrow = weapon.create_arrow(player)
-    if arrow:
-        arrow_group.add(arrow)
-    for arrow in arrow_group:
-        arrow.update()
+        self.damage_text_group.update()
 
-        damage_text = arrow.damage_enemy(enemies)
-        if damage_text is not None:
-            damage_text_group.add(damage_text)
+    def draw(self):
+        self.screen.fill(Constants.BLACK)
 
-    damage_text_group.update()
+        self.player.draw(self.screen)
+        self.weapon.draw(self.screen)
 
-    player.draw(screen)
-    weapon.draw(screen)
-    for arrow in arrow_group:
-        arrow.draw(screen)
+        for arrow in self.arrow_group:
+            arrow.draw(self.screen)
 
-    damage_text_group.draw(screen)
-    HeartInfo.draw_heart_info(HeartInfo(), enemy, screen, heart_images)
+        self.damage_text_group.draw(self.screen)
+        HeartInfo.draw_heart_info(HeartInfo(), self.enemies[0], self.screen, Image.get_hearts(Image()))
 
-    for enemy in enemies:
-        enemy.draw(screen)
+        for enemy in self.enemies:
+            enemy.draw(self.screen)
 
-    # draw player on screen
-    player.draw(screen)
+        pygame.display.update()
 
-    # event handler
-    for event in pygame.event.get():
-        # close window
-        if event.type == pygame.QUIT:
-            run = False
+    def run_game(self):
+        self.run = True
+        while self.run:
+            self.clock.tick(Constants.FPS)
+            self.handle_events()
+            self.update()
+            self.draw()
 
-        # keyboard presses
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_a:
-                moving_left = True
-            if event.key == pygame.K_s:
-                moving_right = True
-            if event.key == pygame.K_w:
-                moving_up = True
-            if event.key == pygame.K_z:
-                moving_down = True
+        pygame.quit()
 
-        # keyboard releases
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_a:
-                moving_left = False
-            if event.key == pygame.K_s:
-                moving_right = False
-            if event.key == pygame.K_w:
-                moving_up = False
-            if event.key == pygame.K_z:
-                moving_down = False
 
-    pygame.display.update()
-
-pygame.quit()
+if __name__ == "__main__":
+    game = Game()
+    game.run_game()

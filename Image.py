@@ -11,7 +11,7 @@ class Image:
         h = image.get_height()
         return pygame.transform.scale(image, (w * scale, h * scale))
 
-    def get_animation_list(self):
+    def get_animations(self):
         animations = []
         for character in self.names:
             images_by_actions = []

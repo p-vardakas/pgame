@@ -15,7 +15,7 @@ class Character:
         self.running = False
         self.action = 0
         self.frame_index = 0
-        self.health = 100
+        self.health = Constants.HEALTH
         self.isAlive = True
 
     def move(self, dx, dy):
